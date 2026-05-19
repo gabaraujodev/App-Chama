@@ -1,4 +1,5 @@
 ﻿using Backend.DTOs;
+using Backend.Exceptions;
 using Backend.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,10 +10,13 @@ namespace Backend.Controllers;
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
+    private readonly ITokenService _tokenService;
 
-    public UsuariosController(IUsuarioService usuarioService)
+    public UsuariosController(IUsuarioService usuarioService, ITokenService tokenService)
     {
         _usuarioService = usuarioService;
+        _tokenService = tokenService;
+
     }
 
     [HttpPost]
@@ -80,5 +84,28 @@ public class UsuariosController : ControllerBase
             return Conflict(new { erro = ex.Message });
         }
 
+    }
+    [HttpPost("login")]
+    public async Task<ActionResult<LoginResponseDto>> Login(LoginUsuarioDto dto)
+    {
+        try
+        {
+            var usuario = await _usuarioService.Login(dto);
+            var token = _tokenService.Generate(usuario);
+          
+            return Ok(new LoginResponseDto
+            {
+                Token = token,
+                Usuario = usuario
+            });
+        }
+
+        
+        catch (UnauthorizedException ex)
+        {
+        {
+            return Unauthorized(new { erro = ex.Message });
+        }
+    }
     }
 }

@@ -10,4 +10,5 @@ public interface IUsuarioService
     Task<UsuarioResponseDto?> BuscarPorId(int id);
     Task<bool> DeletarPorId(int id);
     Task<UsuarioResponseDto?> UpdatePorId(AtualizarUsuarioDto dto);
+    Task<UsuarioResponseDto?> Login(LoginUsuarioDto dto);
 }

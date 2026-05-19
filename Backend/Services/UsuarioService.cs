@@ -4,6 +4,8 @@ using Backend.Models;
 using Microsoft.EntityFrameworkCore;
 using BCrypt.Net;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
+using Backend.Exceptions;
 
 namespace Backend.Services;
 
@@ -115,7 +117,27 @@ public class UsuarioService : IUsuarioService
         };
 
     }
-
+    public async Task<UsuarioResponseDto?> Login(LoginUsuarioDto dto)
+    {
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (usuario == null)
+        {
+             throw new UnauthorizedException("Email ou senha inválidos");
+        }
+        if (BCrypt.Net.BCrypt.Verify(dto.Senha, usuario.SenhaHash))
+        {
+            return new UsuarioResponseDto
+            {
+                Id = usuario.Id,
+                Email = usuario.Email,
+                Nome = usuario.Nome,
+                CriadoEm= usuario.CriadoEm
+            };
+        }
+        throw new UnauthorizedException("Email ou senha inválidos");
+        
+    }
+    
 
 
 

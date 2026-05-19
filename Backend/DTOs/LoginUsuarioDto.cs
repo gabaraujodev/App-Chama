@@ -9,6 +9,8 @@ namespace Backend.DTOs
         public string Email { get; set; } = string.Empty;
 
         [Required]
+        [MinLength(6)]
+
         public string Senha { get; set; } = string.Empty;
     }
 }
