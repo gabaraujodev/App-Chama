@@ -17,8 +17,13 @@ namespace Backend.Services
         }
         public string Generate(UsuarioResponseDto dto)
         {
+            var jwtKey = _configuration["Jwt:Key"];
+            if (string.IsNullOrEmpty(jwtKey))
+            {
+                throw new InvalidOperationException("JWT key is not configured.");
+            }
 
-            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+            var key = Encoding.UTF8.GetBytes(jwtKey);
 
             var credentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature);
 
@@ -29,7 +34,7 @@ namespace Backend.Services
             {
                 Subject = new ClaimsIdentity(new[]
                {
-                    new Claim(ClaimTypes.NameIdentifier,dto.Id.ToString()),      // Payload do token
+                    new Claim(ClaimTypes.NameIdentifier,dto.Id.ToString()),   // Payload do token
                     new Claim(ClaimTypes.Email, dto.Email)
                     
                 }),

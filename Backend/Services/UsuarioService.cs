@@ -6,6 +6,7 @@ using BCrypt.Net;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using Backend.Exceptions;
+using System.Security.Claims;
 
 namespace Backend.Services;
 
@@ -13,6 +14,9 @@ public class UsuarioService : IUsuarioService
 {
     private readonly AppDbContext _context;
 
+
+  
+ 
     public UsuarioService(AppDbContext context)
     {
         _context = context; // Variavel de Acesso ao BD pelo Entity
@@ -20,6 +24,7 @@ public class UsuarioService : IUsuarioService
 
     public async Task<UsuarioResponseDto> CriarUsuario(CriarUsuarioDto dto)
     {
+       
         // 1. Verifica email duplicado
         var existe = await _context.Usuarios
             .AnyAsync(u => u.Email == dto.Email);
@@ -87,7 +92,7 @@ public class UsuarioService : IUsuarioService
             linhasAfetadas = await _context.Usuarios.Where(p => p.Id == id)
                                     .ExecuteDeleteAsync();
 
-        return linhasAfetadas > 0;
+        return linhasAfetadas > 0;// Deleta o Usuario por Id e retorna a quantidade de linhas afetadas
 
     }
 
@@ -117,6 +122,7 @@ public class UsuarioService : IUsuarioService
         };
 
     }
+
     public async Task<UsuarioResponseDto?> Login(LoginUsuarioDto dto)
     {
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == dto.Email);
@@ -137,6 +143,7 @@ public class UsuarioService : IUsuarioService
         throw new UnauthorizedException("Email ou senha inválidos");
         
     }
+    
     
 
 

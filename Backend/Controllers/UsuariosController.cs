@@ -1,7 +1,9 @@
 ﻿using Backend.DTOs;
 using Backend.Exceptions;
 using Backend.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Backend.Controllers;
 
@@ -33,7 +35,7 @@ public class UsuariosController : ControllerBase
             return BadRequest(new { erro = ex.Message });
         }
     }
-
+    [Authorize]
     [HttpGet]
     public async Task<ActionResult<List<UsuarioResponseDto>>> ListarUsuarios()
     {
@@ -41,6 +43,31 @@ public class UsuariosController : ControllerBase
 
         return Ok(usuarios);
     }
+
+    [Authorize]
+    [HttpGet("me")]
+    public async Task<ActionResult<UsuarioResponseDto>> UsuarioAtual()
+    {
+        var claimValue = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(claimValue))
+        {
+            return Unauthorized("Usuário não identificado.");
+        }
+
+        
+        var id = int.Parse(claimValue);// aqui eu tenho o ID que veio do JWT TOKEN
+
+        var usuario = await _usuarioService.BuscarPorId(id);
+
+        if (usuario == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(usuario);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<UsuarioResponseDto>> BuscarPorId(int id)
     {
@@ -51,6 +78,7 @@ public class UsuariosController : ControllerBase
         }
         return Ok(usuario);
     }
+
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeletarPorId(int id) {
         var resultado = await _usuarioService.DeletarPorId(id);
@@ -62,6 +90,7 @@ public class UsuariosController : ControllerBase
             return NotFound();// Ñão encontrou 404
         
     }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<UsuarioResponseDto>> UpdatePorId(int id, AtualizarUsuarioDto dto)
     {
@@ -85,12 +114,17 @@ public class UsuariosController : ControllerBase
         }
 
     }
+
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponseDto>> Login(LoginUsuarioDto dto)
     {
         try
         {
             var usuario = await _usuarioService.Login(dto);
+            if (usuario == null)
+            {
+                return NotFound();
+            }
             var token = _tokenService.Generate(usuario);
           
             return Ok(new LoginResponseDto
