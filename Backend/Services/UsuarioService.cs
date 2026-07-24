@@ -51,7 +51,7 @@ public class UsuarioService : IUsuarioService
         // 5. Retorna resposta (sem Senha)
         return new UsuarioResponseDto
         {
-            Id = usuario.Id,
+            Id = usuario.Id,// Ganhou Id depois de Ser Adicionado no Banco
             Nome = usuario.Nome,
             Email = usuario.Email,
             CriadoEm = usuario.CriadoEm
