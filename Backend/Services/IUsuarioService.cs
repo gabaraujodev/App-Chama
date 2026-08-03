@@ -7,9 +7,9 @@ public interface IUsuarioService
     Task<UsuarioResponseDto> CriarUsuario(CriarUsuarioDto dto);
 
     Task<List<UsuarioResponseDto>> ListarUsuarios();
-    Task<UsuarioResponseDto?> BuscarPorId(int id);
-    Task<bool> DeletarPorId(int id);
-    Task<UsuarioResponseDto?> UpdatePorId(AtualizarUsuarioDto dto);
-    Task<UsuarioResponseDto?> Login(LoginUsuarioDto dto);
+    Task<UsuarioResponseDto> BuscarPorId(int id);
+    Task DeletarPorId(int id);
+    Task<UsuarioResponseDto> UpdatePorId(AtualizarUsuarioDto dto);
+    Task<UsuarioResponseDto> Login(LoginUsuarioDto dto);
    
 }

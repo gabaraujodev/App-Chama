@@ -1,4 +1,4 @@
-﻿namespace Backend.Models;
+﻿namespace Backend.Models { 
 
 public class Grupo
 {
@@ -15,7 +15,8 @@ public class Grupo
     public Usuario Criador { get; set; } = null!;
 
     public ICollection<Participante> Participantes { get; set; } = new List<Participante>();
+    public ICollection<PlanoLeitura> PlanosLeitura { get; set; } = new List<PlanoLeitura>();
+}
 }
 
 
-    

@@ -1,6 +1,7 @@
 ﻿using Backend.Data;
 using Backend.DTOs;
 using Backend.Models;
+using Backend.Exceptions;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,14 +29,15 @@ namespace Backend.Services
                 CriadorId = idClaim
             };
 
-            _context.Grupos.Add(grupo);
-            await _context.SaveChangesAsync();
-
+          
+        
             var participante = new Participante
             {
                 UsuarioId = idClaim,
-                GrupoId = grupo.Id// Agora Ja tem o Id, apos adicionar Grupo no  banco de dados
+                Grupo = grupo// EF coloca o id do grupo pra mim com as propiedades de navegação
             };
+
+            _context.Grupos.Add(grupo);
             _context.Participantes.Add(participante);
             await _context.SaveChangesAsync();
 
@@ -48,19 +50,20 @@ namespace Backend.Services
 
 
         }
-        public async Task<bool> GrupoExiste(int id)
-        {
-            return await _context.Grupos.AnyAsync(p => p.Id == id);
+       
 
-        }
-
-        public async Task<bool> EntrarNoGrupo(int idGrupo, int idUsuario)
+        public async Task EntrarNoGrupo(int idGrupo, int idUsuario)
         {
+            bool grupoExiste = await _context.Grupos.AnyAsync(g => g.Id == idGrupo);
+            if (!grupoExiste)
+            {
+                throw new NotFoundException("Grupo não encontrado.");
+            }
             bool jaExiste = await _context.Participantes
                                   .AnyAsync(p => p.UsuarioId == idUsuario && p.GrupoId == idGrupo);
             if (jaExiste)
             {
-                return false;// retorna false porque tem que dar 409(conflito), ja esta no grupo
+                throw new ConflictException("Usuário já participa do grupo.");// tem que dar 409(conflito), ja esta no grupo
             }
 
             var participante = new Participante
@@ -72,25 +75,26 @@ namespace Backend.Services
 
             _context.Participantes.Add(participante);
             await _context.SaveChangesAsync();
-            return true;
+
 
         }
-        public async Task<bool> SairDoGrupo(int idGrupo, int idUsuario)
+        public async Task SairDoGrupo(int idGrupo, int idUsuario)
         {
-            bool jaExiste = await _context.Participantes
-                                  .AnyAsync(p => p.UsuarioId == idUsuario && p.GrupoId == idGrupo);
-            if (!jaExiste)
+            if (!(await _context.Grupos.AnyAsync(p => p.Id == idGrupo)))
             {
-                return false;// retorna false porque tem que dar 409(conflito), não esta no grupo
+                throw new NotFoundException("Grupo Não existe");
             }
 
-            var participante = await _context.Participantes
-                                     .FirstOrDefaultAsync(p => p.GrupoId == idGrupo && p.UsuarioId == idUsuario);
+            if (!(await _context.Participantes.AnyAsync(p => p.UsuarioId == idUsuario && p.GrupoId == idGrupo)))
+            {
+                throw new ConflictException("Não esta no grupo!");// retorna false porque tem que dar 409(conflito), não esta no grupo
+            }
 
 
-            _context.Participantes.Remove(participante!); // não pode voltar nulo pq ja tratei isso antes
+            _context.Participantes.Remove((await _context.Participantes
+                                     .FirstOrDefaultAsync(p => p.GrupoId == idGrupo && p.UsuarioId == idUsuario))!); // não pode voltar nulo pq ja tratei isso antes
             await _context.SaveChangesAsync();
-            return true;
+
 
         }
         public async Task<List<GrupoResponseDto>> ListarGrupos()
@@ -122,10 +126,8 @@ namespace Backend.Services
 
             return grupos;
         }
-        public async Task<GrupoDetalheResponseDto?> BuscarGrupoPorId(int idGrupo)
+        public async Task<GrupoDetalheResponseDto> BuscarGrupoPorId(int idGrupo)
         {
-
-
             var grupo = await _context.Grupos
                 .Where(p => p.Id == idGrupo)
                 .Select
@@ -140,7 +142,10 @@ namespace Backend.Services
                    .Select(d => d.Usuario.Nome).ToList()// Ele entra em participante e seleciona somente o nome dos usuarios
 
                 }).FirstOrDefaultAsync();
-
+             if (grupo == null)
+            {
+                throw new NotFoundException("Não foram encontrados grupos!");
+            }
 
             return grupo;
         }

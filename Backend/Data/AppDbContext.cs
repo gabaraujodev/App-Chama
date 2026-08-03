@@ -13,6 +13,7 @@ public class AppDbContext : DbContext
     public DbSet<Usuario> Usuarios { get; set; }
     public DbSet<Grupo> Grupos { get; set; }
     public DbSet<Participante> Participantes { get; set; }
+    public DbSet<PlanoLeitura> PlanoLeitura { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

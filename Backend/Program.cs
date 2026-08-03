@@ -51,6 +51,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGrupoService, GrupoService>();
+builder.Services.AddScoped<IPlanoLeituraService, PlanoLeituraService>();
 
 
 var jwtKey = builder.Configuration["Jwt:Key"];

@@ -1,5 +1,6 @@
 ﻿using Backend.DTOs;
 using Backend.Exceptions;
+using Backend.Extensions;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -48,48 +49,52 @@ public class UsuariosController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UsuarioResponseDto>> UsuarioAtual()
     {
-        var claimValue = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrEmpty(claimValue))
+        try
         {
-            return Unauthorized("Usuário não identificado.");
+            return Ok(await _usuarioService.BuscarPorId(User.ObterId()));
         }
-
-        
-        var id = int.Parse(claimValue);// aqui eu tenho o ID que veio do JWT TOKEN
-
-        var usuario = await _usuarioService.BuscarPorId(id);
-
-        if (usuario == null)
+        catch (UnauthorizedException ex)
         {
-            return NotFound();
+            return Unauthorized(ex.Message);
         }
-
-        return Ok(usuario);
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<UsuarioResponseDto>> BuscarPorId(int id)
     {
-        var usuario = await _usuarioService.BuscarPorId(id);
-        if (usuario == null)
+
+        try
         {
-            return NotFound();
+            return Ok(await _usuarioService.BuscarPorId(id));
         }
-        return Ok(usuario);
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeletarPorId(int id) {
-        var resultado = await _usuarioService.DeletarPorId(id);
-        if (resultado)
+    public async Task<ActionResult> DeletarPorId(int id)
+    {
+        try
         {
+            await _usuarioService.DeletarPorId(id);
             return NoContent();// Porque Deletou 204
         }
-        else
-            return NotFound();// Ñão encontrou 404
-        
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+
+
     }
+
+
 
     [HttpPut("{id}")]
     public async Task<ActionResult<UsuarioResponseDto>> UpdatePorId(int id, AtualizarUsuarioDto dto)
@@ -102,15 +107,15 @@ public class UsuariosController : ControllerBase
             }
 
             var usuarioAtualizado = await _usuarioService.UpdatePorId(dto);
-
-            if (usuarioAtualizado == null)
-            {
-                return NotFound();
-            }
             return Ok(usuarioAtualizado);
-        }catch(Exception ex)
-{
+        }
+        catch (ConflictException ex)
+        {
             return Conflict(new { erro = ex.Message });
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(ex.Message);
         }
 
     }
@@ -121,25 +126,21 @@ public class UsuariosController : ControllerBase
         try
         {
             var usuario = await _usuarioService.Login(dto);
-            if (usuario == null)
-            {
-                return NotFound();
-            }
-            var token = _tokenService.Generate(usuario);
-          
+            var token = _tokenService.Generate(usuario);// eu ja tratei no service se for null
+
             return Ok(new LoginResponseDto
             {
                 Token = token,
-                Usuario = usuario
+                Usuario = usuario // eu ja tratei no service se for null
             });
         }
 
-        
+
         catch (UnauthorizedException ex)
         {
-        {
-            return Unauthorized(new { erro = ex.Message });
+            {
+                return Unauthorized(ex.Message );
+            }
         }
-    }
     }
 }

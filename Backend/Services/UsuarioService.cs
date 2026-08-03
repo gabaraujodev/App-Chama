@@ -30,7 +30,7 @@ public class UsuarioService : IUsuarioService
             .AnyAsync(u => u.Email == dto.Email);
 
         if (existe)
-            throw new Exception("Email já está em uso");
+            throw new ConflictException("Email já está em uso");
 
         // 2. Cria hash da senha
         var senhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha);
@@ -70,10 +70,10 @@ public class UsuarioService : IUsuarioService
             })
             .ToListAsync();
     }
-    public async Task<UsuarioResponseDto?> BuscarPorId(int id)
+    public async Task<UsuarioResponseDto> BuscarPorId(int id)
     {
        
-        return await _context.Usuarios
+        var usuario = await _context.Usuarios
             .Where(p => p.Id == id) // Where com o mesmo ID recebido do get
             .Select(user => new UsuarioResponseDto // select o usuario do bd
             {
@@ -84,31 +84,38 @@ public class UsuarioService : IUsuarioService
 
             })
             .FirstOrDefaultAsync(); // Essa função retorna o primeiro ou se não achar nada NULL
+        if(usuario == null)
+        {
+            throw new NotFoundException("Usuario não encontrado!");
+        }
+        return usuario;
     }
 
-    public async Task<bool> DeletarPorId(int id)
+    public async Task DeletarPorId(int id)
     {
-        int linhasAfetadas = 0;
-            linhasAfetadas = await _context.Usuarios.Where(p => p.Id == id)
-                                    .ExecuteDeleteAsync();
+        int linhasAfetadas = await _context.Usuarios
+            .Where(p => p.Id == id)
+            .ExecuteDeleteAsync();
 
-        return linhasAfetadas > 0;// Deleta o Usuario por Id e retorna a quantidade de linhas afetadas
-
+        if (linhasAfetadas == 0)
+        {
+            throw new NotFoundException("Usuário não encontrado!");
+        }
     }
 
-    public async Task<UsuarioResponseDto?> UpdatePorId(AtualizarUsuarioDto dto)
+    public async Task<UsuarioResponseDto> UpdatePorId(AtualizarUsuarioDto dto)
     {
         
         var usr =  await _context.Usuarios.FindAsync(dto.Id);
         
         if (usr == null)        
         {
-            return null;
+            throw new NotFoundException("Usuario Não encontrado");
         }
         var emailExiste = await _context.Usuarios.AnyAsync(u => u.Email == dto.Email && u.Id != dto.Id);
         if (emailExiste)
         {
-            throw new Exception("Email já está em uso");
+            throw new ConflictException("Email já está em uso");
         }
         usr.Nome = dto.Nome;
         usr.Email = dto.Email;
@@ -123,12 +130,12 @@ public class UsuarioService : IUsuarioService
 
     }
 
-    public async Task<UsuarioResponseDto?> Login(LoginUsuarioDto dto)
+    public async Task<UsuarioResponseDto> Login(LoginUsuarioDto dto)
     {
         var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == dto.Email);
         if (usuario == null)
         {
-             throw new UnauthorizedException("Email ou senha inválidos");
+             throw new UnauthorizedException("Email ou senha invalidos");
         }
         if (BCrypt.Net.BCrypt.Verify(dto.Senha, usuario.SenhaHash))
         {

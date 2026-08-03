@@ -1,8 +1,11 @@
 ﻿using Backend.Data;
 using Backend.DTOs;
+using Backend.Exceptions;
+using Backend.Extensions;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
 using System.Security.Claims;
@@ -14,9 +17,11 @@ namespace Backend.Controllers
     public class GruposController : ControllerBase
     {
         private readonly IGrupoService _grupoService;
-        public GruposController(IGrupoService grupoService)
+        private readonly IPlanoLeituraService _planoLeituraService;
+        public GruposController(IGrupoService grupoService, IPlanoLeituraService planoLeituraService)
         {
             _grupoService = grupoService;// Injeta a dependencia
+            _planoLeituraService = planoLeituraService;
         }
 
         [Authorize]
@@ -24,27 +29,19 @@ namespace Backend.Controllers
         public async Task<ActionResult<GrupoResponseDto>> CriarGrupo(CriarGrupoDto dto)
         {
 
-            var claimValue = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(claimValue))
-            {
-                return Unauthorized("Usuário não identificado.");
-            }
-
-
-            var id = int.Parse(claimValue);// aqui eu tenho o ID que veio do JWT TOKEN
-
-
-
             try
             {
-                var grupoCriado = await _grupoService.CriarGrupo(dto, id);
+                var grupoCriado = await _grupoService.CriarGrupo(dto, User.ObterId());
 
                 return Ok(grupoCriado);
             }
-            catch (Exception ex)
+            catch (BadRequestException ex)
             {
                 return BadRequest(new { erro = ex.Message });
+            }
+            catch (UnauthorizedException ex)
+            {
+                return Unauthorized(ex.Message);
             }
 
         }
@@ -54,53 +51,51 @@ namespace Backend.Controllers
         public async Task<ActionResult> EntrarNoGrupo(int id)
         {
 
-            if (!(await _grupoService.GrupoExiste(id)))
+            try
             {
-                return NotFound(); // 404
+
+                await _grupoService.EntrarNoGrupo(id, User.ObterId());
+
+                return NoContent();// criou com sucesso
             }
-
-            var claimValue = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(claimValue))
+            catch (UnauthorizedException ex)
             {
-                return Unauthorized("Usuário não identificado.");
+                return Unauthorized(ex.Message);
             }
-
-
-            var idUser = int.Parse(claimValue);// aqui eu tenho o ID que veio do JWT TOKEN(usuario logado)
-            bool entrou = await _grupoService.EntrarNoGrupo(id, idUser);
-            if (!entrou)
+            catch (NotFoundException ex)
             {
-                return Conflict(new { messagem = "Usuário já participa do grupo." });// 
+                return NotFound(ex.Message); // 404
             }
-            return NoContent();// cricou com sucesso
-
+            catch (ConflictException ex)
+            {
+                return Conflict(ex.Message);
+            }
 
         }
         [Authorize]
         [HttpPost("{id}/sair")]
         public async Task<ActionResult> SairDoGrupo(int id)
         {
-            if (!(await _grupoService.GrupoExiste(id)))
+            try
             {
-                return NotFound(); // 404
+
+                await _grupoService.SairDoGrupo(id, User.ObterId());
+
+                return NoContent();// saiu com sucesso
+            }
+            catch (UnauthorizedException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message); // 404
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(ex.Message);
             }
 
-            var claimValue = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(claimValue))
-            {
-                return Unauthorized("Usuário não identificado.");
-            }
-
-
-            var idUser = int.Parse(claimValue);// aqui eu tenho o ID que veio do JWT TOKEN(usuario logado)
-            bool saiu = await _grupoService.SairDoGrupo(id, idUser);
-            if (!saiu)
-            {
-                return Conflict(new { messagem = "Usuário Não esta no grupo." });// 
-            }
-            return NoContent();// executou com sucesso
 
 
         }
@@ -120,32 +115,160 @@ namespace Backend.Controllers
         [HttpGet("me")]
         public async Task<ActionResult<List<GrupoResponseDto>>> ListarGruposDoUsuario()
         {
-            var claimValue = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(claimValue))
+            try
             {
-                return Unauthorized("Usuário não identificado.");
+                var grupos = await _grupoService.ListarGruposDoUsuario(User.ObterId())
+;
+                return Ok(grupos);
+            }
+            catch (UnauthorizedException ex)
+            {
+                return Unauthorized(ex.Message);
             }
 
-
-            var id = int.Parse(claimValue);// aqui eu tenho o ID que veio do JWT TOKEN
-
-            var grupos = await _grupoService.ListarGruposDoUsuario(id);
-
-            return Ok(grupos);
         }
 
         [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<GrupoDetalheResponseDto>> BuscarGrupoPorId(int id)
         {
-            if (!(await _grupoService.GrupoExiste(id)))
+            try
             {
-                return NotFound(); // 404
+                var grupoDetalhado = await _grupoService.BuscarGrupoPorId(id);
+                return Ok(grupoDetalhado);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [Authorize]
+        [HttpPost("{id}/planos")]
+        public async Task<ActionResult> CriarPlano(int id, CriarPlanoLeituraDto dto)
+        {
+
+            try
+            {
+                var plano = await _planoLeituraService.CriarPlano(id, User.ObterId(), dto);
+                return Ok(plano);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (UnauthorizedException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (ForbiddenException ex)
+            {
+                return StatusCode(403, new
+                {
+                    erro = ex.Message
+                });// forbid() não retorna mensagem , entao tem que retornar assim
             }
 
-            var grupoDetalhado = await _grupoService.BuscarGrupoPorId(id);
-            return Ok(grupoDetalhado);
+
+
+        }
+
+        [Authorize]
+        [HttpGet("{id}/planos")]
+        public async Task<ActionResult> ListarPlanos(int id)
+        {
+            try
+            {
+                var plano = await _planoLeituraService.ListarPlanos(id);
+                return Ok(plano);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+        [Authorize]
+        [HttpGet("{id}/planos/{planoId}")]
+        public async Task<ActionResult> BuscarPlanoId(int id, int planoId)
+        {
+
+            try
+            {
+                var plano = await _planoLeituraService.BuscarPlanoId(id, planoId);
+                return Ok(plano);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+        [Authorize]
+        [HttpPut("{id}/planos/{planoId}")]
+        public async Task<ActionResult<AtualizarPlanoLeituraDto>> EditarPlano(int id, int planoId, AtualizarPlanoLeituraDto dto)
+        {
+            try
+            {
+                var planoAtualizado = await _planoLeituraService.EditarPlano(id, planoId, User.ObterId(), dto);
+                return Ok(planoAtualizado);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (BadRequestException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(ex.Message);
+            }
+            catch (UnauthorizedException ex)
+            {
+                return Unauthorized(ex.Message);
+            }
+            catch (ForbiddenException ex)
+            {
+                return StatusCode(403, new
+                {
+                    erro = ex.Message
+                });// forbid() não retorna mensagem , entao tem que retornar assim
+            }
+
+
+
+
+        }
+        [Authorize]
+        [HttpDelete("{id}/planos/{planoId}")]
+        public async Task<ActionResult> DeletarPlano(int id, int planoId)
+        {
+            try
+            {
+                await _planoLeituraService.DeletarPlano(id,planoId,User.ObterId());
+                return NoContent();// Porque Deletou 204
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ForbiddenException ex)
+            {
+                return StatusCode(403, new
+                {
+                    erro = ex.Message
+                });// forbid() não retorna mensagem , entao tem que retornar assim
+            }
+
 
         }
     }
