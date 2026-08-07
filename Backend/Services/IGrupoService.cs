@@ -12,6 +12,8 @@ namespace Backend.Services
         Task<List<GrupoResponseDto>> ListarGrupos();
         Task<List<GrupoResponseDto>> ListarGruposDoUsuario(int idUsuario);
         Task<GrupoDetalheResponseDto> BuscarGrupoPorId(int idGrupo);
+        Task<List<ParticipanteResponseDto>> ListarParticipantes(int idGrupo, int idUser);
+        Task RetirarUsuarioGrupo(int idGrupo, int idUserDelete, int idUser);
 
     }
 }

@@ -171,9 +171,6 @@ namespace Backend.Controllers
                     erro = ex.Message
                 });// forbid() não retorna mensagem , entao tem que retornar assim
             }
-
-
-
         }
 
         [Authorize]
@@ -190,8 +187,49 @@ namespace Backend.Controllers
                 return NotFound(ex.Message);
             }
         }
+        [Authorize]
+        [HttpGet("{id}/participantes")] // Listar os planos do Grupo 
+        public async Task<ActionResult> ListaParticipantes(int id)
+        {
+            try
+            {
+                var plano = await _grupoService.ListarParticipantes(id,User.ObterId());
+                return Ok(plano);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+          
+        }
 
-        
+        [Authorize]
+        [HttpDelete("{idGrupo}/participantes/{idUserDelete}")] // deletar um usuario especifico
+        public async Task<ActionResult> RetirarUsuarioGrupo(int idGrupo, int idUserDelete)
+        {
+            try
+            {
+                await _grupoService.RetirarUsuarioGrupo(idGrupo,idUserDelete, User.ObterId());
+                return NoContent();
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ForbiddenException ex)
+            {
+                return StatusCode(403, new
+                {
+                    erro = ex.Message
+                });// forbid() não retorna mensagem , entao tem que retornar assim
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(ex.Message);
+            }
+        }
+
+
     }
 }
 

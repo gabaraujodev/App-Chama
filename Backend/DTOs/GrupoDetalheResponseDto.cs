@@ -17,7 +17,7 @@ namespace Backend.DTOs
 
         public int QuantidadeParticipantes { get; set; } = 0;
 
-        public List<string> ListaParticipantes { get; set; } = new List<string>();
+       // public List<string> ListaParticipantes { get; set; } = new List<string>();
 
 
 

@@ -17,6 +17,8 @@ namespace Backend.Services
             _context = context;
         }
 
+      
+        
         public async Task<GrupoResponseDto> CriarGrupo(CriarGrupoDto dto, int idClaim)
         {
             // Como ela pode ter o mesmo nome de outros grupos e a mesma descrição eu não preciso verificar se ja tem outro no banco
@@ -29,8 +31,8 @@ namespace Backend.Services
                 CriadorId = idClaim
             };
 
-          
-        
+
+
             var participante = new Participante
             {
                 UsuarioId = idClaim,
@@ -50,7 +52,7 @@ namespace Backend.Services
 
 
         }
-       
+
 
         public async Task EntrarNoGrupo(int idGrupo, int idUsuario)
         {
@@ -89,7 +91,10 @@ namespace Backend.Services
             {
                 throw new ConflictException("Não esta no grupo!");// retorna false porque tem que dar 409(conflito), não esta no grupo
             }
-
+            if (await _context.Grupos.AnyAsync(p=>p.CriadorId == idUsuario&& p.Id == idGrupo))
+            {
+                throw new ConflictException("o Criador não pode sair de seu grupo!");
+            }
 
             _context.Participantes.Remove((await _context.Participantes
                                      .FirstOrDefaultAsync(p => p.GrupoId == idGrupo && p.UsuarioId == idUsuario))!); // não pode voltar nulo pq ja tratei isso antes
@@ -137,17 +142,55 @@ namespace Backend.Services
                     Descricao = c.Descricao,
                     Lider = c.Criador.Nome,
                     CriadoEm = c.CriadoEm,
-                    QuantidadeParticipantes = c.Participantes.Count(),
-                    ListaParticipantes = c.Participantes
-                   .Select(d => d.Usuario.Nome).ToList()// Ele entra em participante e seleciona somente o nome dos usuarios
-
+                    QuantidadeParticipantes = c.Participantes.Count()
+                  
                 }).FirstOrDefaultAsync();
-             if (grupo == null)
+            if (grupo == null)
             {
                 throw new NotFoundException("Não foram encontrados grupos!");
             }
 
             return grupo;
+        }
+        public async Task<List<ParticipanteResponseDto>> ListarParticipantes(int idGrupo, int idUser)
+        {
+            if (!(await _context.Grupos.AnyAsync(p => p.Participantes.Any(x => x.UsuarioId == idUser) && p.Id == idGrupo)))
+            {
+                throw new ForbiddenException("Sem Autorização");// verifica se o usuario logado faz parte do Grupo
+            }
+            var response = await _context.Grupos
+                         .Where(g => g.Id == idGrupo)
+                         .SelectMany(g => g.Participantes) // Pega todos os participantes do grupo de uma vez
+                         .Select(p => new ParticipanteResponseDto
+                         {
+                             UsuarioId = p.UsuarioId,
+                             Nome = p.Usuario.Nome,
+                             Email = p.Usuario.Email,
+                             Lider = p.Grupo.CriadorId == p.UsuarioId ? true : false
+                         }).ToListAsync();
+            return response;
+        }
+        public async Task RetirarUsuarioGrupo(int idGrupo,int idUserDelete, int idUser)
+        {
+            if (!(await _context.Grupos.AnyAsync(p => p.Participantes.Any(x => x.Grupo.CriadorId == idUser) && p.Id == idGrupo)))
+            {
+                throw new ForbiddenException("Sem Autorização");// verifica se o usuario logado é o Lider(pode retirar alguem)
+            }
+            if ((await _context.Grupos.AnyAsync(p=>p.CriadorId == idUserDelete && p.Id == idGrupo))){
+                throw new ConflictException("Não é possivel remover o lider do grupo");
+            }
+            //context.Grupos.Remove(p => p.Participantes.Where(x => x.UsuarioId == idUserDelete));
+
+            var participante = await _context.Participantes
+                               .FirstOrDefaultAsync(p => p.UsuarioId == idUserDelete && p.GrupoId== idGrupo);
+            
+            if (participante == null)
+            {
+                throw new NotFoundException("Participante não encontrado no grupo.");
+            }
+
+            _context.Participantes.Remove(participante);
+            await _context.SaveChangesAsync();
         }
 
 
