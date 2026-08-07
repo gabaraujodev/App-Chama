@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260729023849_AddPlanoLeitura2")]
-    partial class AddPlanoLeitura2
+    [Migration("20260804054655_AdicionarColecaoLeiturasPlano")]
+    partial class AdicionarColecaoLeiturasPlano
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,6 +52,35 @@ namespace Backend.Migrations
                     b.HasIndex("CriadorId");
 
                     b.ToTable("Grupos");
+                });
+
+            modelBuilder.Entity("Backend.Models.Leitura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataUltimaLeitura")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PlanoLeituraId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UltimoCapituloLido")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanoLeituraId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Leitura");
                 });
 
             modelBuilder.Entity("Backend.Models.Participante", b =>
@@ -148,6 +177,25 @@ namespace Backend.Migrations
                     b.Navigation("Criador");
                 });
 
+            modelBuilder.Entity("Backend.Models.Leitura", b =>
+                {
+                    b.HasOne("Backend.Models.PlanoLeitura", "PlanoLeitura")
+                        .WithMany("Leituras")
+                        .HasForeignKey("PlanoLeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Usuario", "Usuario")
+                        .WithMany("Leituras")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PlanoLeitura");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Backend.Models.Participante", b =>
                 {
                     b.HasOne("Backend.Models.Grupo", "Grupo")
@@ -185,9 +233,16 @@ namespace Backend.Migrations
                     b.Navigation("PlanosLeitura");
                 });
 
+            modelBuilder.Entity("Backend.Models.PlanoLeitura", b =>
+                {
+                    b.Navigation("Leituras");
+                });
+
             modelBuilder.Entity("Backend.Models.Usuario", b =>
                 {
                     b.Navigation("GruposCriados");
+
+                    b.Navigation("Leituras");
 
                     b.Navigation("Participacoes");
                 });

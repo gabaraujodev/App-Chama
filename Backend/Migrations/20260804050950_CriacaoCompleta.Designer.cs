@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Backend.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260728214521_AddPlanoLeitura")]
-    partial class AddPlanoLeitura
+    [Migration("20260804050950_CriacaoCompleta")]
+    partial class CriacaoCompleta
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,6 +54,35 @@ namespace Backend.Migrations
                     b.ToTable("Grupos");
                 });
 
+            modelBuilder.Entity("Backend.Models.Leitura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataUltimaLeitura")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PlanoLeituraId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UltimoCapituloLido")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanoLeituraId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Leitura");
+                });
+
             modelBuilder.Entity("Backend.Models.Participante", b =>
                 {
                     b.Property<int>("GrupoId")
@@ -69,7 +98,7 @@ namespace Backend.Migrations
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("Participante");
+                    b.ToTable("Participantes");
                 });
 
             modelBuilder.Entity("Backend.Models.PlanoLeitura", b =>
@@ -146,6 +175,25 @@ namespace Backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Criador");
+                });
+
+            modelBuilder.Entity("Backend.Models.Leitura", b =>
+                {
+                    b.HasOne("Backend.Models.PlanoLeitura", "PlanoLeitura")
+                        .WithMany()
+                        .HasForeignKey("PlanoLeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PlanoLeitura");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("Backend.Models.Participante", b =>

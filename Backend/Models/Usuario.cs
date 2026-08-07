@@ -14,4 +14,5 @@ public class Usuario
 
     public ICollection<Grupo> GruposCriados { get; set; }= new List<Grupo>();
     public ICollection<Participante> Participacoes { get; set; } = new List<Participante>();
+    public ICollection<Leitura> Leituras { get; set; } = new List<Leitura>();
 }

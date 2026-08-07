@@ -8,8 +8,8 @@ namespace Backend.Services
     {
         Task<PlanoLeituraResponseDto> CriarPlano(int idGrupo, int idUser, CriarPlanoLeituraDto dto);
         Task<List<PlanoLeituraResponseDto>> ListarPlanos(int idGrupo);
-        Task<PlanoLeituraResponseDto> BuscarPlanoId(int idGrupo, int idPlano);
-        Task<AtualizarPlanoLeituraDto> EditarPlano(int idGrupo, int idPlano, int idUser, AtualizarPlanoLeituraDto dto);
-        Task DeletarPlano(int idGrupo, int idPlano, int idUser);
+        Task<PlanoLeituraResponseDto> BuscarPlanoId(int idPlano);
+        Task<AtualizarPlanoLeituraDto> EditarPlano(int idPlano, int idUser, AtualizarPlanoLeituraDto dto);
+        Task DeletarPlano(int idPlano, int idUser);
     }
 }

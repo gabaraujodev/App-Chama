@@ -1,14 +1,9 @@
-﻿using Backend.Data;
-using Backend.DTOs;
+﻿using Backend.DTOs;
 using Backend.Exceptions;
 using Backend.Extensions;
 using Backend.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Query.Expressions.Internal;
-using System.Security.Claims;
 
 namespace Backend.Controllers
 {
@@ -182,7 +177,7 @@ namespace Backend.Controllers
         }
 
         [Authorize]
-        [HttpGet("{id}/planos")]
+        [HttpGet("{id}/planos")] // Listar os planos do Grupo 
         public async Task<ActionResult> ListarPlanos(int id)
         {
             try
@@ -196,81 +191,7 @@ namespace Backend.Controllers
             }
         }
 
-        [Authorize]
-        [HttpGet("{id}/planos/{planoId}")]
-        public async Task<ActionResult> BuscarPlanoId(int id, int planoId)
-        {
-
-            try
-            {
-                var plano = await _planoLeituraService.BuscarPlanoId(id, planoId);
-                return Ok(plano);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-        [Authorize]
-        [HttpPut("{id}/planos/{planoId}")]
-        public async Task<ActionResult<AtualizarPlanoLeituraDto>> EditarPlano(int id, int planoId, AtualizarPlanoLeituraDto dto)
-        {
-            try
-            {
-                var planoAtualizado = await _planoLeituraService.EditarPlano(id, planoId, User.ObterId(), dto);
-                return Ok(planoAtualizado);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (ConflictException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (UnauthorizedException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
-
-
-
-
-        }
-        [Authorize]
-        [HttpDelete("{id}/planos/{planoId}")]
-        public async Task<ActionResult> DeletarPlano(int id, int planoId)
-        {
-            try
-            {
-                await _planoLeituraService.DeletarPlano(id,planoId,User.ObterId());
-                return NoContent();// Porque Deletou 204
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
-
-
-        }
+        
     }
 }
 

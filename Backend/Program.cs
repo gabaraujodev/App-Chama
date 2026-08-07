@@ -52,6 +52,7 @@ builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGrupoService, GrupoService>();
 builder.Services.AddScoped<IPlanoLeituraService, PlanoLeituraService>();
+builder.Services.AddScoped<ILeituraService, LeituraService>();
 
 
 var jwtKey = builder.Configuration["Jwt:Key"];

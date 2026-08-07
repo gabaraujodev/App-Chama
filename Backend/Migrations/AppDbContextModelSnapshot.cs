@@ -51,6 +51,35 @@ namespace Backend.Migrations
                     b.ToTable("Grupos");
                 });
 
+            modelBuilder.Entity("Backend.Models.Leitura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("DataUltimaLeitura")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("PlanoLeituraId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UltimoCapituloLido")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlanoLeituraId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Leitura");
+                });
+
             modelBuilder.Entity("Backend.Models.Participante", b =>
                 {
                     b.Property<int>("GrupoId")
@@ -145,6 +174,25 @@ namespace Backend.Migrations
                     b.Navigation("Criador");
                 });
 
+            modelBuilder.Entity("Backend.Models.Leitura", b =>
+                {
+                    b.HasOne("Backend.Models.PlanoLeitura", "PlanoLeitura")
+                        .WithMany("Leituras")
+                        .HasForeignKey("PlanoLeituraId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Backend.Models.Usuario", "Usuario")
+                        .WithMany("Leituras")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PlanoLeitura");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("Backend.Models.Participante", b =>
                 {
                     b.HasOne("Backend.Models.Grupo", "Grupo")
@@ -182,9 +230,16 @@ namespace Backend.Migrations
                     b.Navigation("PlanosLeitura");
                 });
 
+            modelBuilder.Entity("Backend.Models.PlanoLeitura", b =>
+                {
+                    b.Navigation("Leituras");
+                });
+
             modelBuilder.Entity("Backend.Models.Usuario", b =>
                 {
                     b.Navigation("GruposCriados");
+
+                    b.Navigation("Leituras");
 
                     b.Navigation("Participacoes");
                 });

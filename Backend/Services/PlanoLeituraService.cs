@@ -91,10 +91,10 @@ namespace Backend.Services
             }
             return grupos;
         }
-        public async Task<PlanoLeituraResponseDto> BuscarPlanoId(int idGrupo, int idPlano)
+        public async Task<PlanoLeituraResponseDto> BuscarPlanoId(int idPlano)
         {
             var plano = await _context.PlanoLeitura
-                .Where(p => p.Id == idPlano && p.GrupoId == idGrupo)
+                .Where(p => p.Id == idPlano)
                 .Select
                 (c => new PlanoLeituraResponseDto
                 {
@@ -112,9 +112,9 @@ namespace Backend.Services
             return plano;
 
         }
-        public async Task<AtualizarPlanoLeituraDto> EditarPlano(int idGrupo, int idPlano, int idUser, AtualizarPlanoLeituraDto dto)
+        public async Task<AtualizarPlanoLeituraDto> EditarPlano(int idPlano, int idUser, AtualizarPlanoLeituraDto dto)
         {
-            var plano = await _context.PlanoLeitura.Where(p => p.GrupoId == idGrupo && p.Id == idPlano)
+            var plano = await _context.PlanoLeitura.Where(p => p.Id == idPlano)
                                                     .Include(p => p.Grupo)
                                                     .FirstOrDefaultAsync();
             if (plano == null)
@@ -133,7 +133,7 @@ namespace Backend.Services
             dto.DataInicio,
             dto.DataFim);
             var ultimoPlano = await _context.PlanoLeitura// ordena em ordem decrescente(com base na data em que foi criado) e pega o primeiro
-                            .Where(p => p.GrupoId == idGrupo && p.Id != idPlano)// ignora o plano atual
+                            .Where(p => p.Id != idPlano)// ignora o plano atual
                             .OrderByDescending(p => p.CriadoEm)
                             .FirstOrDefaultAsync();
 
@@ -158,12 +158,12 @@ namespace Backend.Services
                 DataInicio = plano.DataInicio
             };
         }
-        public async Task DeletarPlano(int idGrupo, int idPlano, int idUser)
+        public async Task DeletarPlano(int idPlano, int idUser)
         {
             // 1. Busca o plano incluindo o grupo para validar as regras
             var plano = await _context.PlanoLeitura
                 .Include(p => p.Grupo)
-                .FirstOrDefaultAsync(p => p.Id == idPlano && p.GrupoId == idGrupo);
+                .FirstOrDefaultAsync(p => p.Id == idPlano);
 
             // 2. Se não achou nem o plano nem o grupo
             if (plano == null)

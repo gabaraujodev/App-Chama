@@ -15,5 +15,6 @@
         public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
         public Grupo Grupo { get; set; } = null!;
 
+        public ICollection<Leitura> Leituras { get; set; } = new List<Leitura>();
     }
 }
