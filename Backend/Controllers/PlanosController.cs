@@ -159,6 +159,20 @@ namespace Backend.Controllers
                 return NotFound(ex.Message);
             }
         }
+        [Authorize]
+        [HttpGet("{planoId}/participantes/progresso")]
+        public async Task<ActionResult> ObterProgressoParticipantes (int planoId)
+        {
+            try
+            {
+                var progresso = await _planoLeituraService.ObterProgressoParticipantes(planoId, User.ObterId());
+                return Ok(progresso);
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
 
 
     }

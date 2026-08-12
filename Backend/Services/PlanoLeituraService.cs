@@ -17,7 +17,7 @@ namespace Backend.Services
             _context = context; // variavel de acesso ao DB pelo entity
         }
 
-       
+
         public async Task<PlanoLeituraResponseDto> CriarPlano(int idGrupo, int idUser, CriarPlanoLeituraDto dto)
         {
             // Fazer todas verificaçoes, criar o plano e retornar true caso for criado, false se o grupo não exitir
@@ -133,7 +133,7 @@ namespace Backend.Services
             dto.DataInicio,
             dto.DataFim);
             var ultimoPlano = await _context.PlanoLeitura// ordena em ordem decrescente(com base na data em que foi criado) e pega o primeiro
-                            .Where(p => p.Id != idPlano)// ignora o plano atual
+                            .Where(p => p.Id != idPlano && p.GrupoId == plano.GrupoId)// ignora o plano atual e busca so no grupo selecionado
                             .OrderByDescending(p => p.CriadoEm)
                             .FirstOrDefaultAsync();
 
@@ -182,7 +182,68 @@ namespace Backend.Services
             await _context.SaveChangesAsync();
 
         }
-       private static void ValidarPlano(
+        public async Task<List<ParticipanteProgressoResponseDto>> ObterProgressoParticipantes(int idPlano, int idUser)
+        {
+            // 1. Verifica se o plano existe
+            var plano = await _context.PlanoLeitura
+                .Include(p => p.Grupo)
+                .FirstOrDefaultAsync(p => p.Id == idPlano);
+
+            if (plano == null)
+            {
+                throw new NotFoundException("Plano não existe.");
+            }
+
+            // 2. Verifica se o usuário participa do grupo desse plano
+            var participa = await _context.Participantes
+                .AnyAsync(p =>
+                    p.GrupoId == plano.GrupoId &&
+                    p.UsuarioId == idUser);
+
+            if (!participa)
+            {
+                throw new ForbiddenException("Você não participa desse grupo.");
+            }
+
+            // 3. Busca todos os participantes do grupo
+            var progresso = await _context.Participantes
+                .Where(p => p.GrupoId == plano.GrupoId)
+                .Select(p => new ParticipanteProgressoResponseDto
+                {
+                    UsuarioId = p.UsuarioId,
+                    Nome = p.Usuario.Nome,
+
+                    UltimoCapituloLido = _context.Leitura
+                        .Where(l =>
+                            l.UsuarioId == p.UsuarioId &&
+                            l.PlanoLeituraId == idPlano)
+                        .Select(l => (int?)l.UltimoCapituloLido)
+                        .FirstOrDefault() ?? 0,
+
+                    Percentual = _context.Leitura
+                        .Where(l =>
+                            l.UsuarioId == p.UsuarioId &&
+                            l.PlanoLeituraId == idPlano)
+                        .Select(l =>
+                            l.UltimoCapituloLido > 0
+                                ? (int)(((double)(l.UltimoCapituloLido - plano.CapituloInicial + 1) /
+                                (double)(plano.CapituloFinal - plano.CapituloInicial + 1 )) * 100): 0)
+
+                        .FirstOrDefault(),
+
+                    Concluiu = _context.Leitura
+                        .Where(l =>
+                            l.UsuarioId == p.UsuarioId &&
+                            l.PlanoLeituraId == idPlano)
+                        .Select(l =>
+                            l.UltimoCapituloLido >= plano.CapituloFinal)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return progresso;
+        }
+        private static void ValidarPlano(
        string livro,
        int capInicial,
        int capFinal,

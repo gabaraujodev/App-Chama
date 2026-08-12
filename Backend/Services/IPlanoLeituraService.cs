@@ -11,5 +11,6 @@ namespace Backend.Services
         Task<PlanoLeituraResponseDto> BuscarPlanoId(int idPlano);
         Task<AtualizarPlanoLeituraDto> EditarPlano(int idPlano, int idUser, AtualizarPlanoLeituraDto dto);
         Task DeletarPlano(int idPlano, int idUser);
+        Task<List<ParticipanteProgressoResponseDto>> ObterProgressoParticipantes(int idPlano, int idUser);
     }
 }
