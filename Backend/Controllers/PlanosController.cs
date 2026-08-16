@@ -144,10 +144,17 @@ namespace Backend.Controllers
             {
                 return NotFound(ex.Message);
             }
+            catch (ForbiddenException ex)
+            {
+                return StatusCode(403, new
+                {
+                    erro = ex.Message
+                });// forbid() não retorna mensagem , entao tem que retornar assim
+            }
         }
         [Authorize]
         [HttpGet("{planoId}/progresso")]
-        public async Task<ActionResult> ObterProgresso(int planoId)
+        public async Task<ActionResult> ObterProgressoGrupo(int planoId)
         {
             try
             {
@@ -157,6 +164,13 @@ namespace Backend.Controllers
             catch (NotFoundException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (ForbiddenException ex)
+            {
+                return StatusCode(403, new
+                {
+                    erro = ex.Message
+                });// forbid() não retorna mensagem , entao tem que retornar assim
             }
         }
         [Authorize]
@@ -171,6 +185,13 @@ namespace Backend.Controllers
             catch (NotFoundException ex)
             {
                 return NotFound(ex.Message);
+            }
+            catch (ForbiddenException ex)
+            {
+                return StatusCode(403, new
+                {
+                    erro = ex.Message
+                });// forbid() não retorna mensagem , entao tem que retornar assim
             }
         }
 

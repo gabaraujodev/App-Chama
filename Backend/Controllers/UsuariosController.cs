@@ -31,18 +31,10 @@ public class UsuariosController : ControllerBase
 
             return Ok(usuarioCriado);
         }
-        catch (Exception ex)
+        catch (ConflictException ex)
         {
-            return BadRequest(new { erro = ex.Message });
+            return Conflict(ex.Message);
         }
-    }
-    [Authorize]
-    [HttpGet]
-    public async Task<ActionResult<List<UsuarioResponseDto>>> ListarUsuarios()
-    {
-        var usuarios = await _usuarioService.ListarUsuarios();
-
-        return Ok(usuarios);
     }
 
     [Authorize]
@@ -63,50 +55,40 @@ public class UsuariosController : ControllerBase
         }
     }
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<UsuarioResponseDto>> BuscarPorId(int id)
-    {
-
-        try
-        {
-            return Ok(await _usuarioService.BuscarPorId(id));
-        }
-        catch (NotFoundException ex)
-        {
-            return NotFound(ex.Message);
-        }
-
-    }
-
+    [Authorize]
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeletarPorId(int id)
     {
         try
         {
-            await _usuarioService.DeletarPorId(id);
+            await _usuarioService.DeletarPorId(id, User.ObterId());
             return NoContent();// Porque Deletou 204
         }
         catch (NotFoundException ex)
         {
             return NotFound(ex.Message);
         }
+        catch (ForbiddenException ex)
+        {
+            return StatusCode(403, new
+            {
+                erro = ex.Message
+            });// forbid() não retorna mensagem , entao tem que retornar assim
+        }
 
 
     }
 
 
-
+    [Authorize]
     [HttpPut("{id}")]
     public async Task<ActionResult<UsuarioResponseDto>> UpdatePorId(int id, AtualizarUsuarioDto dto)
     {
         try
         {
-            if (id != dto.Id)
-            {
-                return BadRequest("ID da rota diferente do corpo");
-            }
+            
 
-            var usuarioAtualizado = await _usuarioService.UpdatePorId(dto);
+            var usuarioAtualizado = await _usuarioService.UpdatePorId(id,User.ObterId(), dto);
             return Ok(usuarioAtualizado);
         }
         catch (ConflictException ex)
@@ -116,6 +98,10 @@ public class UsuariosController : ControllerBase
         catch (NotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch(BadRequestException ex)
+        {
+            return BadRequest(ex.Message);
         }
 
     }

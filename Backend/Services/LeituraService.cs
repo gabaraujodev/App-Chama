@@ -37,6 +37,10 @@ namespace Backend.Services
                 .Where(p => p.PlanoLeituraId == planoId && p.UsuarioId == userId)
                 .FirstOrDefaultAsync();
 
+            if (dto.UltimoCapituloLido > planoLeitura.CapituloFinal || dto.UltimoCapituloLido < planoLeitura.CapituloInicial)
+            {
+                throw new BadRequestException("informação invalida!");// verifica, capitulo maior que o final,meno que o inicial e 0/negativo
+            }
             if (leitura == null)
             {// caso nunca tiver criado a leitura
                 var leituraNovo = new Leitura
@@ -50,10 +54,7 @@ namespace Backend.Services
                 _context.Leitura.Add(leituraNovo);
                 leitura = leituraNovo;
             }
-            if (dto.UltimoCapituloLido > planoLeitura!.CapituloFinal || dto.UltimoCapituloLido < planoLeitura.CapituloInicial)
-            {
-                throw new BadRequestException("informação invalida!");// verifica, capitulo maior que o final,meno que o inicial e 0/negativo
-            }
+           
             leitura.UltimoCapituloLido = dto.UltimoCapituloLido;
             leitura.DataUltimaLeitura = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -115,10 +116,13 @@ namespace Backend.Services
                 .FirstOrDefault() ?? 0
 
         }).FirstOrDefaultAsync();
-            
-            
 
-            if (progresso!.UltimoCapituloLido > 0)// como eu ja tratei se o plano for nulo antes aqui eu posso ter certeza que não vai ser nulo
+
+            if (progresso == null)
+            {
+                throw new NotFoundException("Plano não encontrado.");
+            }
+            if (progresso.UltimoCapituloLido > 0)// como eu ja tratei se o plano for nulo antes aqui eu posso ter certeza que não vai ser nulo
             {
                 // 1. Calcula a quantidade de capítulos lidos e o total de capítulos
                 double capitulosLidos = (progresso.UltimoCapituloLido - progresso.CapituloInicial) + 1;

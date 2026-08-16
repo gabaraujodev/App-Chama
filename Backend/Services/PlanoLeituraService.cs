@@ -214,29 +214,21 @@ namespace Backend.Services
                     Nome = p.Usuario.Nome,
 
                     UltimoCapituloLido = _context.Leitura
-                        .Where(l =>
-                            l.UsuarioId == p.UsuarioId &&
-                            l.PlanoLeituraId == idPlano)
+                        .Where(l =>l.UsuarioId == p.UsuarioId && l.PlanoLeituraId == idPlano)
                         .Select(l => (int?)l.UltimoCapituloLido)
                         .FirstOrDefault() ?? 0,
 
                     Percentual = _context.Leitura
-                        .Where(l =>
-                            l.UsuarioId == p.UsuarioId &&
-                            l.PlanoLeituraId == idPlano)
-                        .Select(l =>
-                            l.UltimoCapituloLido > 0
+                        .Where(l =>l.UsuarioId == p.UsuarioId && l.PlanoLeituraId == idPlano)
+                        .Select(l =>l.UltimoCapituloLido > 0
                                 ? (int)(((double)(l.UltimoCapituloLido - plano.CapituloInicial + 1) /
                                 (double)(plano.CapituloFinal - plano.CapituloInicial + 1 )) * 100): 0)
 
                         .FirstOrDefault(),
 
                     Concluiu = _context.Leitura
-                        .Where(l =>
-                            l.UsuarioId == p.UsuarioId &&
-                            l.PlanoLeituraId == idPlano)
-                        .Select(l =>
-                            l.UltimoCapituloLido >= plano.CapituloFinal)
+                        .Where(l =>l.UsuarioId == p.UsuarioId && l.PlanoLeituraId == idPlano)
+                        .Select(l =>l.UltimoCapituloLido >= plano.CapituloFinal)
                         .FirstOrDefault()
                 })
                 .ToListAsync();

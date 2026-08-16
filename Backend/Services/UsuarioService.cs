@@ -1,12 +1,9 @@
 ﻿using Backend.Data;
 using Backend.DTOs;
 using Backend.Models;
-using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using Backend.Exceptions;
-using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace Backend.Services;
 
@@ -58,18 +55,7 @@ public class UsuarioService : IUsuarioService
         };
     }
 
-    public async Task<List<UsuarioResponseDto>> ListarUsuarios()
-    {
-        return await _context.Usuarios
-            .Select(usuario => new UsuarioResponseDto
-            {
-                Id = usuario.Id,
-                Nome = usuario.Nome,
-                Email = usuario.Email,
-                CriadoEm = usuario.CriadoEm
-            })
-            .ToListAsync();
-    }
+
     public async Task<UsuarioResponseDto> BuscarPorId(int id)
     {
        
@@ -91,8 +77,12 @@ public class UsuarioService : IUsuarioService
         return usuario;
     }
 
-    public async Task DeletarPorId(int id)
+    public async Task DeletarPorId(int id, int idUser)
     {
+        if (id != idUser)
+        {
+            throw new ForbiddenException("Você não tem permissão para fazer isso!");
+        }
         int linhasAfetadas = await _context.Usuarios
             .Where(p => p.Id == id)
             .ExecuteDeleteAsync();
@@ -103,16 +93,19 @@ public class UsuarioService : IUsuarioService
         }
     }
 
-    public async Task<UsuarioResponseDto> UpdatePorId(AtualizarUsuarioDto dto)
+    public async Task<UsuarioResponseDto> UpdatePorId(int id,int idUser,AtualizarUsuarioDto dto)
     {
-        
-        var usr =  await _context.Usuarios.FindAsync(dto.Id);
+        if (id != idUser)
+        {
+            throw new BadRequestException("ID da rota diferente do logado");
+        }
+        var usr =  await _context.Usuarios.FindAsync(id);
         
         if (usr == null)        
         {
             throw new NotFoundException("Usuario Não encontrado");
         }
-        var emailExiste = await _context.Usuarios.AnyAsync(u => u.Email == dto.Email && u.Id != dto.Id);
+        var emailExiste = await _context.Usuarios.AnyAsync(u => u.Email == dto.Email && u.Id != id);
         if (emailExiste)
         {
             throw new ConflictException("Email já está em uso");
