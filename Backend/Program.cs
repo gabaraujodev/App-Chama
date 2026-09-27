@@ -1,4 +1,5 @@
 using Backend.Data;
+using Backend.Exceptions;
 using Backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +54,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IGrupoService, GrupoService>();
 builder.Services.AddScoped<IPlanoLeituraService, PlanoLeituraService>();
 builder.Services.AddScoped<ILeituraService, LeituraService>();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -87,7 +89,7 @@ builder.Services.AddAuthentication(x =>
 
         };
     });
-
+builder.Services.AddProblemDetails();
 var app = builder.Build();
 
 // Ativa Swagger
@@ -99,7 +101,7 @@ if (app.Environment.IsDevelopment())
 
 // Pode comentar por enquanto para evitar o aviso do HTTPS
 // app.UseHttpsRedirection();
-
+app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 

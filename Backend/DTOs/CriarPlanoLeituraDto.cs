@@ -5,12 +5,15 @@ namespace Backend.DTOs
     public class CriarPlanoLeituraDto
     {
         [Required]
+        [StringLength(100, MinimumLength = 2)]
         public string Livro { get; set; } = string.Empty;
 
-        [Required]
+        
+        [Range(1, 150)]
         public int CapituloInicial { get; set; }
 
-        [Required]
+        
+        [Range(1, 150)]
         public int CapituloFinal { get; set; }
 
         [Required]

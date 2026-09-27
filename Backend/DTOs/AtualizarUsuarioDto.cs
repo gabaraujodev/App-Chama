@@ -1,9 +1,14 @@
-﻿namespace Backend.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Backend.DTOs
 {
     public class AtualizarUsuarioDto
     {
-        //public int Id { get; set; } a pessoa vai passar o id na rota e nao no corpo
+        [Required]
+        [StringLength(100, MinimumLength = 2)]
         public string Nome { get; set; } = string.Empty;
+        [Required]
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
     }
 }

@@ -20,179 +20,68 @@ namespace Backend.Controllers
                 _planoLeituraService = planoLeituraService;
             }
 
+
+
         [Authorize]
         [HttpGet("{planoId}")]
         public async Task<ActionResult> BuscarPlanoId(int planoId)
         {
-
-            try
-            {
                 var plano = await _planoLeituraService.BuscarPlanoId(planoId);
-                return Ok(plano);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
+                return Ok(plano);      
         }
+
+
         [Authorize]
         [HttpPut("{planoId}")]
         public async Task<ActionResult<AtualizarPlanoLeituraDto>> EditarPlano(int planoId, AtualizarPlanoLeituraDto dto)
         {
-            try
-            {
                 var planoAtualizado = await _planoLeituraService.EditarPlano(planoId, User.ObterId(), dto);
                 return Ok(planoAtualizado);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (ConflictException ex)
-            {
-                return Conflict(ex.Message);
-            }
-            catch (UnauthorizedException ex)
-            {
-                return Unauthorized(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
-
-
-
-
         }
+
+
         [Authorize]
         [HttpDelete("{planoId}")]
         public async Task<ActionResult> DeletarPlano(int planoId)
         {
-            try
-            {
                 await _planoLeituraService.DeletarPlano(planoId, User.ObterId());
                 return NoContent();// Porque Deletou 204
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
-
-           
         }
-        /*
-            POST   /api/planos/{id}/marcar-leitura
+        
 
-            GET    /api/planos/{id}/progresso
-
-            GET    /api/planos/{id}/participantes
-
-            GET    /api/planos/{id}/pendentes*/
         [Authorize]
         [HttpPut("{planoId}/leitura")]
         public async Task<ActionResult> MarcarLeitura(int planoId,AtualizarLeituraDto dto )
         {
-            try
-            {
                 await _leituraService.MarcarLeitura(planoId, User.ObterId(), dto);
-                return NoContent();
-            }
-            catch (NotFoundException ex) {
-                return NotFound(ex.Message);
-            }
-            catch (BadRequestException ex)
-            {
-                return BadRequest(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
+                return NoContent(); 
         }
+
+
         [Authorize]
         [HttpGet("{planoId}/leitura")]
         public async Task<ActionResult> ObterProgressoMe(int planoId)
         {
-            try
-            {
                 var progresso = await _leituraService.ObterProgressoMe(planoId, User.ObterId());
                 return Ok(progresso);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
         }
+
+
         [Authorize]
         [HttpGet("{planoId}/progresso")]
         public async Task<ActionResult> ObterProgressoGrupo(int planoId)
         {
-            try
-            {
                var progresso =  await _leituraService.ObterProgressoGrupo(planoId, User.ObterId());
                return Ok(progresso);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
         }
+
+
         [Authorize]
         [HttpGet("{planoId}/participantes/progresso")]
         public async Task<ActionResult> ObterProgressoParticipantes (int planoId)
         {
-            try
-            {
                 var progresso = await _planoLeituraService.ObterProgressoParticipantes(planoId, User.ObterId());
                 return Ok(progresso);
-            }
-            catch (NotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (ForbiddenException ex)
-            {
-                return StatusCode(403, new
-                {
-                    erro = ex.Message
-                });// forbid() não retorna mensagem , entao tem que retornar assim
-            }
         }
 
 

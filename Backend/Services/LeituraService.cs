@@ -122,7 +122,7 @@ namespace Backend.Services
             {
                 throw new NotFoundException("Plano não encontrado.");
             }
-            if (progresso.UltimoCapituloLido > 0)// como eu ja tratei se o plano for nulo antes aqui eu posso ter certeza que não vai ser nulo
+            if (progresso.UltimoCapituloLido > 0)
             {
                 // 1. Calcula a quantidade de capítulos lidos e o total de capítulos
                 double capitulosLidos = (progresso.UltimoCapituloLido - progresso.CapituloInicial) + 1;
